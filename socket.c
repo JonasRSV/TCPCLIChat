@@ -35,28 +35,40 @@ void start_server(int port) {
 
     listen(server_socket, 10);
 
-    int client_socket, client_status = 1;
+    int client_socket, client_status;
     char client_message[COM_BUFFER_MX_SZ];
     char server_response[COM_BUFFER_MX_SZ];
 
+      
+
     while (1) {
+        client_status = 1;
         client_socket = accept(server_socket, (struct sockaddr*)NULL, NULL);
+        fflush(stdout);
 
         while (client_status > 0) {
             bzero(client_message, COM_BUFFER_MX_SZ * sizeof(char));
             client_status = read(client_socket, client_message, sizeof(client_message));
 
+            if (client_status <= 0) {
+                break;
+            }
+
             printf("%s", client_message);
             bzero(server_response, sizeof(char) * COM_BUFFER_MX_SZ);
 
-            printf("\n> ");
+            printf("> ");
             fgets(server_response, sizeof(server_response), stdin);
 
             client_status =  write(client_socket, server_response, sizeof(char) * COM_BUFFER_MX_SZ);
         }
 
+
+        printf("\nClient Dropped Connection :(\n");
+        fflush(stdout);
         close(client_socket); 
     }
+
 }
 
 void start_client(char*addr, int port) {
@@ -94,7 +106,7 @@ void start_client(char*addr, int port) {
     while (server_status > 0) {
         bzero(client_message, sizeof(client_message));
         bzero(server_message, sizeof(server_message));
-        printf("\n> ");
+        printf("> ");
         fgets(client_message, sizeof(client_message), stdin);
 
         server_status = write(client_socket, client_message, sizeof(client_message));
@@ -129,8 +141,6 @@ int main(int argc, char* argv[]) {
         if (strcmp(argv[1], "-c") == 0) {
             char *addr = argv[2];
             int port = atoiconv(argv[3]);
-
-            printf("%s, %d", addr, port);
 
             start_client(addr, port);
         }
